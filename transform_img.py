@@ -14,7 +14,7 @@ if style == 1:
     img_edge = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, blockSize=3, C=2)
 if style == 2:
     # 风格2
-    img_blur = cv2.GaussianBlur(img_gray, ksize=(21, 21), sigmaX=0, sigmaY=0)
+    img_blur = cv2.GaussianBlur(img_gray, ksize=(11, 11), sigmaX=0, sigmaY=0)
     img_edge = cv2.divide(img_gray, img_blur, scale=255)
 
 

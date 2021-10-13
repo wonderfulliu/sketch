@@ -9,6 +9,14 @@ from cv2 import VideoWriter_fourcc
 # 要转换的视频的名字
 video_name = 'video.mp4'
 
+# 帧配置（每秒x帧）2/4/6/8/12/24
+video_frame = 12
+# 配置素描的点的多少
+video_depth = 10
+
+# 视频风格
+style = 2
+# 文件夹配置
 res_dic = 'result'
 img_dic = 'images'
 ske_dic = 'sketch'
@@ -62,11 +70,12 @@ def video_to_pic(imgPath):
     while success:
         frame_count += 1
         success, frame = cap.read()
-
-        if frame_count % 2.5 == 0:
-            i += 1
-            cv2.imwrite(imgPath + '/%d.jpg' % i, frame)
+        if success:
+            if frame_count % (24 / video_frame) == 0:
+                i += 1
+                cv2.imwrite(imgPath + '/%d.jpg' % i, frame)
     cap.release()
+    cv2.destroyAllWindows()
     print('切割视频完成')
 
 
@@ -75,28 +84,40 @@ def pic_to_sketch(imgPath, sketchPath):
     print('原图转素描...')
     images = os.listdir(imgPath)
     for num_count in range(len(images)):
-        a = np.asarray(Image.open(imgPath + '/' + str(num_count + 1) + '.jpg').convert('L')).astype('float')
+        img_src = imgPath + '/' + str(num_count + 1) + '.jpg'
 
-        depth = 10.
-        grad = np.gradient(a)
-        grad_x, grad_y = grad
+        if style == 1:
+            # style 1
+            img_rgb = cv2.imread(img_src)
+            img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
+            img_blur = cv2.GaussianBlur(img_gray, ksize=(11, 11), sigmaX=0, sigmaY=0)
+            img_edge = cv2.divide(img_gray, img_blur, scale=255)
+            cv2.imwrite(sketchPath + '/' + str(num_count + 1) + '.jpg', img_edge)
 
-        grad_x = grad_x * depth / 100.
-        grad_y = grad_y * depth / 100.
+        if style == 2:
+            # style 2
+            a = np.asarray(Image.open(img_src).convert('L')).astype('float')
+            depth = video_depth
+            grad = np.gradient(a)
+            grad_x, grad_y = grad
 
-        A = np.sqrt(grad_x ** 2 + grad_y ** 2 + 1.)
-        uni_x = grad_x / A
-        uni_y = grad_y / A
-        uni_z = 1. / A
-        vec_el = np.pi / 2.2
-        vec_az = np.pi / 4.
-        dx = np.cos(vec_el) * np.cos(vec_az)
-        dy = np.cos(vec_el) * np.sin(vec_az)
-        dz = np.sin(vec_el)
-        b = 255 * (dx * uni_x + dy * uni_y + dz * uni_z)
-        b = b.clip(0, 255)
-        im = Image.fromarray(b.astype('uint8'))
-        im.save(sketchPath + '/' + str(num_count + 1) + '.jpg')
+            grad_x = grad_x * depth / 100.
+            grad_y = grad_y * depth / 100.
+
+            A = np.sqrt(grad_x ** 2 + grad_y ** 2 + 1.)
+            uni_x = grad_x / A
+            uni_y = grad_y / A
+            uni_z = 1. / A
+            vec_el = np.pi / 2.2
+            vec_az = np.pi / 4.
+            dx = np.cos(vec_el) * np.cos(vec_az)
+            dy = np.cos(vec_el) * np.sin(vec_az)
+            dz = np.sin(vec_el)
+            b = 255 * (dx * uni_x + dy * uni_y + dz * uni_z)
+            b = b.clip(0, 255)
+            im = Image.fromarray(b.astype('uint8'))
+            im.save(sketchPath + '/' + str(num_count + 1) + '.jpg')
+
     print('原图转素描完成')
 
 
@@ -106,7 +127,7 @@ def sketch_to_video(sketchPath, videoPath):
     images = os.listdir(sketchPath)
     images.sort(key=lambda x: int(x[:-4]))
 
-    fps = 12
+    fps = video_frame
 
     fourcc = VideoWriter_fourcc(*'mp4v')
     image = Image.open(sketchPath + '/' + images[0])
