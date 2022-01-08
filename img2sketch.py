@@ -1,7 +1,7 @@
 import cv2
 import os
 
-src_image = 'img.png'
+src_image = 'ttt.png'
 
 style = 2
 
