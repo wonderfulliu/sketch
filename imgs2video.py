@@ -9,7 +9,7 @@ root = os.getcwd()
 # 存储素描图片的路径†
 sketch_path = root + '/郑荷花_20220107110351611'
 # 视频帧率
-video_fps = 24
+video_fps = 12
 # 存储素描视频的路径
 video_path = root + '/result-' + str(video_fps) + '.mp4'
 
